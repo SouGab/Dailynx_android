@@ -37,10 +37,19 @@ class UpdateManager(private val context: Context) {
                 val bodyString = response.body?.string() ?: return@withContext null
                 val json = JSONObject(bodyString)
                 val latestSha = json.getString("sha")
+                
+                // On vérifie le SHA enregistré.
                 val currentSha = prefs.getString(KEY_LAST_SHA, null)
 
-                if (latestSha != currentSha) {
+                // Si le SHA GitHub est différent du dernier SHA enregistré, on propose la maj.
+                if (currentSha != null && latestSha != currentSha) {
                     return@withContext latestSha
+                }
+                
+                // Si c'est la toute première fois qu'on lance l'app sans SHA enregistré,
+                // on enregistre le SHA actuel de GitHub comme étant la version courante.
+                if (currentSha == null) {
+                    updateCurrentSha(latestSha)
                 }
             }
         } catch (e: Exception) {
