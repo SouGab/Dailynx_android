@@ -20,14 +20,24 @@ import com.example.myapplication.ui.workout.HistoryScreen
 import com.example.myapplication.ui.workout.WorkoutViewModel
 import com.example.myapplication.ui.workout.SettingsScreen
 import com.example.myapplication.ui.components.ApiKeyDialog
+import com.example.myapplication.data.network.UpdateManager
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
 class MainActivity : ComponentActivity() {
 
     private val workoutViewModel by lazy { WorkoutViewModel(application) }
+    private val updateManager by lazy { UpdateManager(this) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -44,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                WorkoutApp(viewModel = workoutViewModel)
+                WorkoutApp(viewModel = workoutViewModel, updateManager = updateManager)
             }
         }
     }
@@ -61,9 +71,49 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WorkoutApp(
     viewModel: WorkoutViewModel,
+    updateManager: UpdateManager,
     navController: NavHostController = rememberNavController()
 ) {
     var showApiKeyDialog by remember { mutableStateOf(!viewModel.hasApiKey()) }
+    var updateSha by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    var isDownloading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        updateSha = updateManager.checkForUpdates()
+    }
+
+    if (updateSha != null) {
+        AlertDialog(
+            onDismissRequest = { if (!isDownloading) updateSha = null },
+            title = { Text(if (isDownloading) "Téléchargement..." else "Mise à jour disponible") },
+            text = { Text(if (isDownloading) "Veuillez patienter pendant le téléchargement de la nouvelle version." else "Une nouvelle version est disponible. Voulez-vous l'installer maintenant ?") },
+            confirmButton = {
+                if (!isDownloading) {
+                    Button(onClick = {
+                        scope.launch {
+                            isDownloading = true
+                            val success = updateManager.downloadAndInstallApk()
+                            if (success) {
+                                updateManager.updateCurrentSha(updateSha!!)
+                            }
+                            isDownloading = false
+                            updateSha = null
+                        }
+                    }) {
+                        Text("Installer")
+                    }
+                }
+            },
+            dismissButton = {
+                if (!isDownloading) {
+                    TextButton(onClick = { updateSha = null }) {
+                        Text("Plus tard")
+                    }
+                }
+            }
+        )
+    }
 
     if (showApiKeyDialog) {
         ApiKeyDialog(
@@ -91,6 +141,7 @@ fun WorkoutApp(
         composable("settings") {
             SettingsScreen(
                 viewModel = viewModel,
+                updateManager = updateManager,
                 onHomeClick = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
                 onHistoryClick = { navController.navigate("history") },
                 onEquipmentClick = { navController.navigate("equipment") }

@@ -15,12 +15,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.components.AppBottomNavigationBar
 import com.example.myapplication.ui.components.ApiKeyDialog
+import com.example.myapplication.data.network.UpdateManager
 import java.time.LocalDate
 import androidx.compose.ui.draw.scale
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     viewModel: WorkoutViewModel,
+    updateManager: UpdateManager,
     onHomeClick: () -> Unit,
     onHistoryClick: () -> Unit,
     onEquipmentClick: () -> Unit
@@ -28,6 +32,8 @@ fun SettingsScreen(
     val equipmentList by viewModel.equipmentList.collectAsState()
     var montrePopUpConfirmation by remember { mutableStateOf(false) }
     var montrePopUpApiKey by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var isCheckingUpdate by remember { mutableStateOf(false) }
 
     // --- ÉTATS LOCAUX POUR LA PERSONNALISATION DE L'IA ---
     var genererSport by remember { mutableStateOf(true) }
@@ -277,6 +283,40 @@ fun SettingsScreen(
                     Column {
                         Text("Clé API Gemini", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         Text("Modifier la clé utilisée par l'IA", color = Color.Gray, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- BOUTON 4 : MISE À JOUR ---
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = !isCheckingUpdate) {
+                        scope.launch {
+                            isCheckingUpdate = true
+                            val sha = updateManager.checkForUpdates()
+                            if (sha != null) {
+                                // Déclenche le téléchargement et l'installation
+                                updateManager.downloadAndInstallApk()
+                                // Note: Le SHA sera mis à jour après l'install réussie via MainActivity au prochain reboot
+                                // ou on pourrait le faire ici si on est sûr.
+                            }
+                            isCheckingUpdate = false
+                        }
+                    },
+                colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.1f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(if (isCheckingUpdate) "⏳" else "☁️", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Vérifier les mises à jour", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Vérifier s'il y a des changements sur GitHub", color = Color.Gray, fontSize = 14.sp)
                     }
                 }
             }
