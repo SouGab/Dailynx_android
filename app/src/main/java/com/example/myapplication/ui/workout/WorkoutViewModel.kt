@@ -249,7 +249,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                         _poemState.value = PoemUiState.Error("Erreur de lecture du poème.")
                     }
                 } else {
-                    generateWeeklyPoemsFromNetwork(dateString)
+                    // Si on a pas de poème local, on ne fait rien ici pour éviter les requêtes à chaque clic.
+                    // Ils seront générés via la logique de semaine.
+                    _poemState.value = PoemUiState.Idle
                 }
             }
         }
@@ -262,8 +264,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val poems = poemService.fetchRandomPoems()
 
         if (poems.isNotEmpty()) {
+            // On stocke les poèmes pour toute la semaine (l'API nous en donne 3, on les répartit)
+            // Pour faire une vraie semaine, il faudrait random/7 mais l'API peut être lente ou limitée
             poems.forEachIndexed { index, poem ->
-                if (index < 7) { // On en a que 3 avec l'endpoint random/3, mais on prévoit
+                if (index < 7) {
                     val dateExacteString = lundiDeCetteSemaine.plusDays(index.toLong()).toString()
                     val entity = PoemEntity(
                         date = dateExacteString,
@@ -280,11 +284,6 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 val lines = Json.decodeFromString<List<String>>(updatedLocal.linesJson)
                 val poem = Poem(title = updatedLocal.title, author = updatedLocal.author, lines = lines, linecount = lines.size.toString())
                 _poemState.value = PoemUiState.Success(poem)
-            } else {
-                // Si on a pas de poème pour ce jour spécifique (ex: jeudi alors qu'on en a pris que 3)
-                // On peut en reprendre un au hasard
-                val randomPoem = poems.random()
-                _poemState.value = PoemUiState.Success(randomPoem)
             }
         } else {
             _poemState.value = PoemUiState.Error("Impossible de récupérer les poèmes.")
@@ -295,6 +294,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val aujourdhui = LocalDate.now()
         val dateCible = LocalDate.parse(dateSelectionneeString)
         val lundiDeCetteSemaine = dateCible.with(DayOfWeek.MONDAY)
+
+        // On génère aussi les poèmes pour la semaine si on régénère le sport
+        generateWeeklyPoemsFromNetwork(dateSelectionneeString)
 
         val equipementsUtilisateur = equipmentDao.getAllEquipment()
         val texteEquipement = if (equipementsUtilisateur.isEmpty()) {
