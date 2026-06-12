@@ -22,15 +22,26 @@ import com.example.myapplication.data.model.EquipmentEntity
 import com.example.myapplication.data.model.LearningEntity
 import com.example.myapplication.data.model.Info
 import com.example.myapplication.data.model.WeeklyLearningResponse
+import com.example.myapplication.data.model.Poem
+import com.example.myapplication.data.model.PoemEntity
 import com.example.myapplication.data.prompt.Prompts
 import com.example.myapplication.data.network.GeminiService
 import com.example.myapplication.data.network.ApiKeyManager
+import com.example.myapplication.data.network.PoemService
+import com.example.myapplication.ui.workout.LearningUiState
 
 sealed interface WorkoutUiState {
     object Idle : WorkoutUiState
     object Loading : WorkoutUiState
     data class Success(val program: WorkoutProgram, val date: String, val isCompleted: Boolean) : WorkoutUiState
     data class Error(val message: String) : WorkoutUiState
+}
+
+sealed interface PoemUiState {
+    object Idle : PoemUiState
+    object Loading : PoemUiState
+    data class Success(val poem: Poem) : PoemUiState
+    data class Error(val message: String) : PoemUiState
 }
 
 @Serializable
@@ -50,6 +61,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private val apiKeyManager = ApiKeyManager(application)
     private var geminiService: GeminiService? = null
+    private val poemService = PoemService()
 
     init {
         apiKeyManager.getApiKey()?.let {
@@ -68,6 +80,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val workoutDao = database.workoutDao()
     private val equipmentDao = database.equipmentDao()
     private val learningDao = database.learningDao()
+    private val poemDao = database.poemDao()
 
     private val _uiState = MutableStateFlow<WorkoutUiState>(WorkoutUiState.Idle)
     val uiState: StateFlow<WorkoutUiState> = _uiState
@@ -80,6 +93,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private val _learningState = MutableStateFlow<LearningUiState>(LearningUiState.Idle)
     val learningState: StateFlow<LearningUiState> = _learningState
+
+    private val _poemState = MutableStateFlow<PoemUiState>(PoemUiState.Idle)
+    val poemState: StateFlow<PoemUiState> = _poemState
 
     private val _monthlyWorkouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
     val monthlyWorkouts: StateFlow<List<WorkoutEntity>> = _monthlyWorkouts
@@ -188,6 +204,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             _uiState.value = WorkoutUiState.Loading
             _learningState.value = LearningUiState.Loading
+            _poemState.value = PoemUiState.Loading
 
             withContext(Dispatchers.IO) {
                 val dateCible = LocalDate.parse(dateString)
@@ -220,7 +237,57 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 } else {
                     generateWeeklyLearningFromNetwork(dateString)
                 }
+
+                // 3. Chargement Poème
+                val localPoem = poemDao.getPoemByDate(dateString)
+                if (localPoem != null) {
+                    try {
+                        val lines = Json.decodeFromString<List<String>>(localPoem.linesJson)
+                        val poem = Poem(title = localPoem.title, author = localPoem.author, lines = lines, linecount = lines.size.toString())
+                        _poemState.value = PoemUiState.Success(poem)
+                    } catch (e: Exception) {
+                        _poemState.value = PoemUiState.Error("Erreur de lecture du poème.")
+                    }
+                } else {
+                    generateWeeklyPoemsFromNetwork(dateString)
+                }
             }
+        }
+    }
+
+    private suspend fun generateWeeklyPoemsFromNetwork(dateSelectionneeString: String) {
+        val dateCible = LocalDate.parse(dateSelectionneeString)
+        val lundiDeCetteSemaine = dateCible.with(DayOfWeek.MONDAY)
+
+        val poems = poemService.fetchRandomPoems()
+
+        if (poems.isNotEmpty()) {
+            poems.forEachIndexed { index, poem ->
+                if (index < 7) { // On en a que 3 avec l'endpoint random/3, mais on prévoit
+                    val dateExacteString = lundiDeCetteSemaine.plusDays(index.toLong()).toString()
+                    val entity = PoemEntity(
+                        date = dateExacteString,
+                        title = poem.title,
+                        author = poem.author,
+                        linesJson = Json.encodeToString(poem.lines)
+                    )
+                    poemDao.insertPoem(entity)
+                }
+            }
+
+            val updatedLocal = poemDao.getPoemByDate(dateSelectionneeString)
+            if (updatedLocal != null) {
+                val lines = Json.decodeFromString<List<String>>(updatedLocal.linesJson)
+                val poem = Poem(title = updatedLocal.title, author = updatedLocal.author, lines = lines, linecount = lines.size.toString())
+                _poemState.value = PoemUiState.Success(poem)
+            } else {
+                // Si on a pas de poème pour ce jour spécifique (ex: jeudi alors qu'on en a pris que 3)
+                // On peut en reprendre un au hasard
+                val randomPoem = poems.random()
+                _poemState.value = PoemUiState.Success(randomPoem)
+            }
+        } else {
+            _poemState.value = PoemUiState.Error("Impossible de récupérer les poèmes.")
         }
     }
 

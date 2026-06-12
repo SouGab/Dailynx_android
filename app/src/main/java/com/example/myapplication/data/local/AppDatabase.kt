@@ -7,14 +7,16 @@ import androidx.room.DatabaseConfiguration
 import androidx.room.RoomDatabase
 import com.example.myapplication.data.model.WorkoutEntity
 import com.example.myapplication.data.model.EquipmentEntity
-import com.example.myapplication.data.model.LearningEntity // 🟢 AJOUT
+import com.example.myapplication.data.model.LearningEntity
+import com.example.myapplication.data.model.PoemEntity
 
-@Database(entities = [WorkoutEntity::class, EquipmentEntity::class, LearningEntity::class], version = 4, exportSchema = false) // 🟢 Version passe à 3
+@Database(entities = [WorkoutEntity::class, EquipmentEntity::class, LearningEntity::class, PoemEntity::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkoutDao
     abstract fun equipmentDao(): EquipmentDao
-    abstract fun learningDao(): LearningDao // 🟢 AJOUT
+    abstract fun learningDao(): LearningDao
+    abstract fun poemDao(): PoemDao
 
     companion object {
         @Volatile

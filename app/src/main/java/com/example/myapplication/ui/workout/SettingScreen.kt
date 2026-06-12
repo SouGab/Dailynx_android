@@ -27,7 +27,8 @@ fun SettingsScreen(
     updateManager: UpdateManager,
     onHomeClick: () -> Unit,
     onHistoryClick: () -> Unit,
-    onEquipmentClick: () -> Unit
+    onEquipmentClick: () -> Unit,
+    onPoemClick: () -> Unit
 ) {
     val equipmentList by viewModel.equipmentList.collectAsState()
     var montrePopUpConfirmation by remember { mutableStateOf(false) }
@@ -240,6 +241,28 @@ fun SettingsScreen(
                     Column {
                         Text("Mon Équipement", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         Text("Gérer le matériel de base pour l'IA", color = Color.Gray, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- BOUTON 1.5 : POÉSIE ---
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPoemClick() },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("📜", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Journal de Poésie", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Relire vos poèmes quotidiens", color = Color.Gray, fontSize = 14.sp)
                     }
                 }
             }

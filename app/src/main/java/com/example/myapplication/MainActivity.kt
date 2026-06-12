@@ -19,6 +19,7 @@ import com.example.myapplication.ui.workout.HomeScreen
 import com.example.myapplication.ui.workout.HistoryScreen
 import com.example.myapplication.ui.workout.WorkoutViewModel
 import com.example.myapplication.ui.workout.SettingsScreen
+import com.example.myapplication.ui.workout.PoemSettingsScreen
 import com.example.myapplication.ui.components.ApiKeyDialog
 import com.example.myapplication.data.network.UpdateManager
 import androidx.compose.material3.AlertDialog
@@ -144,7 +145,17 @@ fun WorkoutApp(
                 updateManager = updateManager,
                 onHomeClick = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
                 onHistoryClick = { navController.navigate("history") },
-                onEquipmentClick = { navController.navigate("equipment") }
+                onEquipmentClick = { navController.navigate("equipment") },
+                onPoemClick = { navController.navigate("poem_journal") }
+            )
+        }
+        composable("poem_journal") {
+            PoemSettingsScreen(
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() },
+                onHomeClick = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
+                onHistoryClick = { navController.navigate("history") },
+                onSettingsClick = { navController.navigate("settings") { popUpTo("settings") { inclusive = true } } }
             )
         }
         composable("equipment") {
