@@ -6,13 +6,12 @@ import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class GeminiService {
-    private val apiKey = "AIzaSyCOI332usKDYIqTrIde7w6AYstpEYmvTdc"
+class GeminiService(apiKey: String) {
     private val config = generationConfig { responseMimeType = "application/json" }
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-3.1-flash-lite",
+        modelName = "gemini-1.5-flash-lite",
         apiKey = apiKey,
-        generationConfig = config
+        generationConfig = config,
     )
 
     suspend fun fetchWorkoutJson(prompt: String): String? = withContext(Dispatchers.IO) {

@@ -24,6 +24,7 @@ import com.example.myapplication.data.model.Info
 import com.example.myapplication.data.model.WeeklyLearningResponse
 import com.example.myapplication.data.prompt.Prompts
 import com.example.myapplication.data.network.GeminiService
+import com.example.myapplication.data.network.ApiKeyManager
 
 sealed interface WorkoutUiState {
     object Idle : WorkoutUiState
@@ -47,7 +48,22 @@ data class WeeklyWorkoutResponse(
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val geminiService = GeminiService()
+    private val apiKeyManager = ApiKeyManager(application)
+    private var geminiService: GeminiService? = null
+
+    init {
+        apiKeyManager.getApiKey()?.let {
+            geminiService = GeminiService(it)
+        }
+    }
+
+    fun hasApiKey(): Boolean = apiKeyManager.hasApiKey()
+
+    fun saveApiKey(key: String) {
+        apiKeyManager.setApiKey(key)
+        geminiService = GeminiService(key)
+    }
+
     private val database = AppDatabase.getDatabase(application)
     private val workoutDao = database.workoutDao()
     private val equipmentDao = database.equipmentDao()
@@ -223,7 +239,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val contraintesGlobales = "$contraintes. Matériel disponible : $texteEquipement"
 
         val prompt = Prompts.getWeeklyWorkoutPrompt(contraintesGlobales, sport)
-        val jsonResult = geminiService.fetchWorkoutJson(prompt)
+        val jsonResult = geminiService?.fetchWorkoutJson(prompt)
 
         if (jsonResult != null) {
             try {
@@ -268,7 +284,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val lundiDeCetteSemaine = dateCible.with(DayOfWeek.MONDAY)
 
         val prompt = Prompts.getWeeklyLearningPrompt()
-        val jsonResult = geminiService.fetchWorkoutJson(prompt)
+        val jsonResult = geminiService?.fetchWorkoutJson(prompt)
 
         if (jsonResult != null) {
             try {
@@ -334,7 +350,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                     }
 
                     val prompt = Prompts.getWeeklyWorkoutPrompt(contraintesGlobales, null)
-                    val jsonResult = geminiService.fetchWorkoutJson(prompt)
+                    val jsonResult = geminiService?.fetchWorkoutJson(prompt)
 
                     if (jsonResult != null) {
                         try {

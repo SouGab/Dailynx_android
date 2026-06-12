@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.components.AppBottomNavigationBar
+import com.example.myapplication.ui.components.ApiKeyDialog
 import java.time.LocalDate
 import androidx.compose.ui.draw.scale
 
@@ -26,6 +27,7 @@ fun SettingsScreen(
 ) {
     val equipmentList by viewModel.equipmentList.collectAsState()
     var montrePopUpConfirmation by remember { mutableStateOf(false) }
+    var montrePopUpApiKey by remember { mutableStateOf(false) }
 
     // --- ÉTATS LOCAUX POUR LA PERSONNALISATION DE L'IA ---
     var genererSport by remember { mutableStateOf(true) }
@@ -185,6 +187,13 @@ fun SettingsScreen(
         )
     }
 
+    if (montrePopUpApiKey) {
+        ApiKeyDialog(
+            onDismiss = { montrePopUpApiKey = false },
+            onSave = { viewModel.saveApiKey(it) }
+        )
+    }
+
     Scaffold(
         bottomBar = {
             AppBottomNavigationBar(
@@ -247,6 +256,27 @@ fun SettingsScreen(
                     Column {
                         Text("Régénérer le programme", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text("Personnaliser et recalculer via l'IA", color = Color.Gray, fontSize = 14.sp)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- BOUTON 3 : CLÉ API ---
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { montrePopUpApiKey = true },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🔑", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Clé API Gemini", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Modifier la clé utilisée par l'IA", color = Color.Gray, fontSize = 14.sp)
                     }
                 }
             }

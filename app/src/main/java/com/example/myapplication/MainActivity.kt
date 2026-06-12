@@ -19,6 +19,11 @@ import com.example.myapplication.ui.workout.HomeScreen
 import com.example.myapplication.ui.workout.HistoryScreen
 import com.example.myapplication.ui.workout.WorkoutViewModel
 import com.example.myapplication.ui.workout.SettingsScreen
+import com.example.myapplication.ui.components.ApiKeyDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
 
@@ -58,6 +63,18 @@ fun WorkoutApp(
     viewModel: WorkoutViewModel,
     navController: NavHostController = rememberNavController()
 ) {
+    var showApiKeyDialog by remember { mutableStateOf(!viewModel.hasApiKey()) }
+
+    if (showApiKeyDialog) {
+        ApiKeyDialog(
+            onDismiss = { showApiKeyDialog = false },
+            onSave = { key ->
+                viewModel.saveApiKey(key)
+                showApiKeyDialog = false
+            }
+        )
+    }
+
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             HomeScreen(
