@@ -22,27 +22,27 @@ fun AppBottomNavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
         tonalElevation = 8.dp
     ) {
-        // 📊 BOUTON HISTORIQUE (À Gauche)
+        // 🗓️ BOUTON HISTORIQUE (À Gauche)
         NavigationBarItem(
             selected = isHistorySelected,
             onClick = onHistoryClick,
-            icon = { Text("📊", fontSize = 20.sp) },
+            icon = { Text("🗓️", fontSize = 20.sp) },
             label = { Text("Historique", fontWeight = FontWeight.Medium) }
         )
 
-        // 🏠 BOUTON HOME (Au Centre)
+        // 🐾 BOUTON HOME (Au Centre)
         NavigationBarItem(
             selected = isHomeSelected,
             onClick = onHomeClick,
-            icon = { Text("🏠", fontSize = 20.sp) },
+            icon = { Text("🐾", fontSize = 20.sp) },
             label = { Text("Home", fontWeight = FontWeight.Bold) }
         )
 
-        // ⚙️ BOUTON SETTINGS (À Droite)
+        // 🛠️ BOUTON SETTINGS (À Droite)
         NavigationBarItem(
             selected = isSettingsSelected,
             onClick = onSettingsClick,
-            icon = { Text("⚙️", fontSize = 20.sp) },
+            icon = { Text("🛠️", fontSize = 20.sp) },
             label = { Text("Settings", fontWeight = FontWeight.Medium) }
         )
     }
