@@ -24,11 +24,13 @@ import com.example.myapplication.data.model.Info
 import com.example.myapplication.data.model.WeeklyLearningResponse
 import com.example.myapplication.data.model.Poem
 import com.example.myapplication.data.model.PoemEntity
+import com.example.myapplication.data.model.Article
+import com.example.myapplication.data.model.NewsEntity
 import com.example.myapplication.data.prompt.Prompts
 import com.example.myapplication.data.network.GeminiService
 import com.example.myapplication.data.network.ApiKeyManager
 import com.example.myapplication.data.network.PoemService
-import com.example.myapplication.ui.workout.LearningUiState
+import com.example.myapplication.data.network.NewsService
 
 sealed interface WorkoutUiState {
     object Idle : WorkoutUiState
@@ -42,6 +44,13 @@ sealed interface PoemUiState {
     object Loading : PoemUiState
     data class Success(val poem: Poem) : PoemUiState
     data class Error(val message: String) : PoemUiState
+}
+
+sealed interface NewsUiState {
+    object Idle : NewsUiState
+    object Loading : NewsUiState
+    data class Success(val articles: List<Article>) : NewsUiState
+    data class Error(val message: String) : NewsUiState
 }
 
 @Serializable
@@ -61,19 +70,29 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private val apiKeyManager = ApiKeyManager(application)
     private var geminiService: GeminiService? = null
+    private var newsService: NewsService? = null
     private val poemService = PoemService()
 
     init {
         apiKeyManager.getApiKey()?.let {
             geminiService = GeminiService(it)
         }
+        apiKeyManager.getNewsApiKey()?.let {
+            newsService = NewsService(it)
+        }
     }
 
     fun hasApiKey(): Boolean = apiKeyManager.hasApiKey()
+    fun hasNewsApiKey(): Boolean = apiKeyManager.hasNewsApiKey()
 
     fun saveApiKey(key: String) {
         apiKeyManager.setApiKey(key)
         geminiService = GeminiService(key)
+    }
+
+    fun saveNewsApiKey(key: String) {
+        apiKeyManager.setNewsApiKey(key)
+        newsService = NewsService(key)
     }
 
     private val database = AppDatabase.getDatabase(application)
@@ -81,6 +100,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val equipmentDao = database.equipmentDao()
     private val learningDao = database.learningDao()
     private val poemDao = database.poemDao()
+    private val newsDao = database.newsDao()
 
     private val _uiState = MutableStateFlow<WorkoutUiState>(WorkoutUiState.Idle)
     val uiState: StateFlow<WorkoutUiState> = _uiState
@@ -96,6 +116,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     private val _poemState = MutableStateFlow<PoemUiState>(PoemUiState.Idle)
     val poemState: StateFlow<PoemUiState> = _poemState
+
+    private val _newsState = MutableStateFlow<NewsUiState>(NewsUiState.Idle)
+    val newsState: StateFlow<NewsUiState> = _newsState
 
     private val _monthlyWorkouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
     val monthlyWorkouts: StateFlow<List<WorkoutEntity>> = _monthlyWorkouts
@@ -205,6 +228,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             _uiState.value = WorkoutUiState.Loading
             _learningState.value = LearningUiState.Loading
             _poemState.value = PoemUiState.Loading
+            _newsState.value = NewsUiState.Loading
 
             withContext(Dispatchers.IO) {
                 val dateCible = LocalDate.parse(dateString)
@@ -253,7 +277,37 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                     // Ils seront générés via la logique de semaine.
                     _poemState.value = PoemUiState.Idle
                 }
+
+                // 4. Chargement News
+                val localNews = newsDao.getNewsByDate(dateString)
+                if (localNews.isNotEmpty()) {
+                    val articles = localNews.map {
+                        Article(title = it.title, description = it.description, url = it.url, source = com.example.myapplication.data.model.Source(it.sourceName ?: ""))
+                    }
+                    _newsState.value = NewsUiState.Success(articles)
+                } else {
+                    generateWeeklyNewsFromNetwork(dateString)
+                }
             }
+        }
+    }
+
+    private suspend fun generateWeeklyNewsFromNetwork(dateSelectionneeString: String) {
+        val response = newsService?.fetchFrenchNews()
+        if (response != null && response.articles.isNotEmpty()) {
+            val newsEntities = response.articles.map {
+                NewsEntity(
+                    date = dateSelectionneeString,
+                    title = it.title,
+                    description = it.description,
+                    url = it.url,
+                    sourceName = it.source?.name
+                )
+            }
+            newsDao.insertNews(newsEntities)
+            _newsState.value = NewsUiState.Success(response.articles)
+        } else {
+            _newsState.value = NewsUiState.Error("Pas de news disponibles.")
         }
     }
 
@@ -261,11 +315,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val dateCible = LocalDate.parse(dateSelectionneeString)
         val lundiDeCetteSemaine = dateCible.with(DayOfWeek.MONDAY)
 
-        val poems = poemService.fetchRandomPoems()
+        val poems = poemService.fetchRandomPoems(7)
 
         if (poems.isNotEmpty()) {
-            // On stocke les poèmes pour toute la semaine (l'API nous en donne 3, on les répartit)
-            // Pour faire une vraie semaine, il faudrait random/7 mais l'API peut être lente ou limitée
             poems.forEachIndexed { index, poem ->
                 if (index < 7) {
                     val dateExacteString = lundiDeCetteSemaine.plusDays(index.toLong()).toString()
@@ -297,6 +349,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
         // On génère aussi les poèmes pour la semaine si on régénère le sport
         generateWeeklyPoemsFromNetwork(dateSelectionneeString)
+        // On génère aussi les news pour la semaine
+        generateWeeklyNewsFromNetwork(dateSelectionneeString)
 
         val equipementsUtilisateur = equipmentDao.getAllEquipment()
         val texteEquipement = if (equipementsUtilisateur.isEmpty()) {

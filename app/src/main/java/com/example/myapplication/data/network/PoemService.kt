@@ -10,12 +10,13 @@ import okhttp3.Request
 
 class PoemService {
     private val client = OkHttpClient()
-    private val url = "https://poetrydb.org/random/3"
+    private val url = "https://poetrydb.org/random/"
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun fetchRandomPoems(): List<Poem> = withContext(Dispatchers.IO) {
+    suspend fun fetchRandomPoems(number: Int): List<Poem> = withContext(Dispatchers.IO) {
         try {
-            val request = Request.Builder().url(url).build()
+            Log.i("PoemService", "Poems fetched successfully")
+            val request = Request.Builder().url(url + number).build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@withContext emptyList()
                 val body = response.body?.string() ?: return@withContext emptyList()

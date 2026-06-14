@@ -35,6 +35,7 @@ fun HomeScreen(
     val completedDates by viewModel.completedDates.collectAsState()
     val learningState by viewModel.learningState.collectAsState()
     val poemState by viewModel.poemState.collectAsState()
+    val newsState by viewModel.newsState.collectAsState()
 
     val aujourdhui = remember { LocalDate.now() }
     val lundiDeLaSemaine = remember { aujourdhui.with(DayOfWeek.MONDAY) }
@@ -153,6 +154,8 @@ fun HomeScreen(
                 DailyLearningSection(uiState = learningState, onLikeClick = { viewModel.toggleLikeLearning(jourSelectionne.toString()) })
                 Spacer(modifier = Modifier.height(20.dp))
                 DailyPoemSection(uiState = poemState)
+                Spacer(modifier = Modifier.height(20.dp))
+                DailyNewsSection(uiState = newsState)
                 Spacer(modifier = Modifier.height(24.dp)) // Espace net en bas du scroll
             }
         }

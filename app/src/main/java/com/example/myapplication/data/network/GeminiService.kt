@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 class GeminiService(apiKey: String) {
     private val config = generationConfig { responseMimeType = "application/json" }
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash-lite",
+        modelName = "gemini-3.5-flash",
         apiKey = apiKey,
         generationConfig = config,
     )

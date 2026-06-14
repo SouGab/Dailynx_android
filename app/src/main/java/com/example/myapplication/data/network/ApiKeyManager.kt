@@ -8,6 +8,7 @@ class ApiKeyManager(context: Context) {
 
     companion object {
         private const val KEY_GEMINI_API = "gemini_api_key"
+        private const val KEY_NEWS_API = "news_api_key"
     }
 
     fun getApiKey(): String? {
@@ -20,5 +21,17 @@ class ApiKeyManager(context: Context) {
 
     fun hasApiKey(): Boolean {
         return !getApiKey().isNullOrBlank()
+    }
+
+    fun getNewsApiKey(): String? {
+        return prefs.getString(KEY_NEWS_API, null)
+    }
+
+    fun setNewsApiKey(apiKey: String) {
+        prefs.edit().putString(KEY_NEWS_API, apiKey).apply()
+    }
+
+    fun hasNewsApiKey(): Boolean {
+        return !getNewsApiKey().isNullOrBlank()
     }
 }

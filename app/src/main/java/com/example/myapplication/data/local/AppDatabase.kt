@@ -9,14 +9,16 @@ import com.example.myapplication.data.model.WorkoutEntity
 import com.example.myapplication.data.model.EquipmentEntity
 import com.example.myapplication.data.model.LearningEntity
 import com.example.myapplication.data.model.PoemEntity
+import com.example.myapplication.data.model.NewsEntity
 
-@Database(entities = [WorkoutEntity::class, EquipmentEntity::class, LearningEntity::class, PoemEntity::class], version = 5, exportSchema = false)
+@Database(entities = [WorkoutEntity::class, EquipmentEntity::class, LearningEntity::class, PoemEntity::class, NewsEntity::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun workoutDao(): WorkoutDao
     abstract fun equipmentDao(): EquipmentDao
     abstract fun learningDao(): LearningDao
     abstract fun poemDao(): PoemDao
+    abstract fun newsDao(): NewsDao
 
     companion object {
         @Volatile

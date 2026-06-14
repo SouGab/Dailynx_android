@@ -33,6 +33,7 @@ fun SettingsScreen(
     val equipmentList by viewModel.equipmentList.collectAsState()
     var montrePopUpConfirmation by remember { mutableStateOf(false) }
     var montrePopUpApiKey by remember { mutableStateOf(false) }
+    var montrePopUpNewsApiKey by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var isCheckingUpdate by remember { mutableStateOf(false) }
 
@@ -201,6 +202,15 @@ fun SettingsScreen(
         )
     }
 
+    if (montrePopUpNewsApiKey) {
+        ApiKeyDialog(
+            title = "Clé NewsAPI.org",
+            description = "Entrez votre clé NewsAPI pour les actualités.",
+            onDismiss = { montrePopUpNewsApiKey = false },
+            onSave = { viewModel.saveNewsApiKey(it) }
+        )
+    }
+
     Scaffold(
         bottomBar = {
             AppBottomNavigationBar(
@@ -306,6 +316,28 @@ fun SettingsScreen(
                     Column {
                         Text("Clé API Gemini", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         Text("Modifier la clé utilisée par l'IA", color = Color.Gray, fontSize = 14.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- BOUTON 3.5 : CLÉ NEWS API ---
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { montrePopUpNewsApiKey = true },
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🗞️", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Clé News API", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Modifier la clé pour les actualités", color = Color.Gray, fontSize = 14.sp)
                     }
                 }
             }

@@ -76,6 +76,7 @@ fun WorkoutApp(
     navController: NavHostController = rememberNavController()
 ) {
     var showApiKeyDialog by remember { mutableStateOf(!viewModel.hasApiKey()) }
+    var showNewsApiKeyDialog by remember { mutableStateOf(viewModel.hasApiKey() && !viewModel.hasNewsApiKey()) }
     var updateSha by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var isDownloading by remember { mutableStateOf(false) }
@@ -122,6 +123,19 @@ fun WorkoutApp(
             onSave = { key ->
                 viewModel.saveApiKey(key)
                 showApiKeyDialog = false
+                if (!viewModel.hasNewsApiKey()) showNewsApiKeyDialog = true
+            }
+        )
+    }
+
+    if (showNewsApiKeyDialog) {
+        ApiKeyDialog(
+            title = "Clé NewsAPI.org",
+            description = "Veuillez entrer votre clé NewsAPI pour afficher les actualités françaises.",
+            onDismiss = { showNewsApiKeyDialog = false },
+            onSave = { key ->
+                viewModel.saveNewsApiKey(key)
+                showNewsApiKeyDialog = false
             }
         )
     }

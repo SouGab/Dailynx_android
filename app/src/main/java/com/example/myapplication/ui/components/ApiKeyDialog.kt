@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ApiKeyDialog(
+    title: String = "Clé API Gemini",
+    description: String = "Veuillez entrer votre clé API Gemini pour utiliser l'IA.",
     initialValue: String = "",
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
@@ -28,10 +30,10 @@ fun ApiKeyDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Clé API Gemini", fontWeight = FontWeight.Bold) },
+        title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Veuillez entrer votre clé API Gemini pour utiliser l'IA.")
+                Text(description)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = text,
