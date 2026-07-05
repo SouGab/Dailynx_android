@@ -28,6 +28,7 @@ import com.example.myapplication.ui.components.AppBottomNavigationBar
 fun HomeScreen(
     viewModel: WorkoutViewModel,
     onStartWorkoutClick: () -> Unit,
+    onAddManualWorkoutClick: (String) -> Unit,
     onSettingsClick: () -> Unit, // 🟢 Renommé car il pointe vers Settings
     onHistoryClick: () -> Unit
 ) {
@@ -149,7 +150,13 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
-                DailyWorkoutSection(uiState = uiState, jourSelectionne = jourSelectionne, aujourdhui = aujourdhui, onStartWorkoutClick = onStartWorkoutClick)
+                DailyWorkoutSection(
+                    uiState = uiState,
+                    jourSelectionne = jourSelectionne,
+                    aujourdhui = aujourdhui,
+                    onStartWorkoutClick = onStartWorkoutClick,
+                    onAddManualClick = onAddManualWorkoutClick
+                )
                 Spacer(modifier = Modifier.height(20.dp))
                 DailyLearningSection(uiState = learningState, onLikeClick = { viewModel.toggleLikeLearning(jourSelectionne.toString()) })
                 Spacer(modifier = Modifier.height(20.dp))

@@ -20,6 +20,7 @@ import com.example.myapplication.ui.workout.HistoryScreen
 import com.example.myapplication.ui.workout.WorkoutViewModel
 import com.example.myapplication.ui.workout.SettingsScreen
 import com.example.myapplication.ui.workout.PoemSettingsScreen
+import com.example.myapplication.ui.workout.ManualWorkoutScreen
 import com.example.myapplication.ui.components.ApiKeyDialog
 import com.example.myapplication.data.network.UpdateManager
 import androidx.compose.material3.AlertDialog
@@ -145,8 +146,17 @@ fun WorkoutApp(
             HomeScreen(
                 viewModel = viewModel,
                 onStartWorkoutClick = { navController.navigate("execution") },
+                onAddManualWorkoutClick = { date -> navController.navigate("manual_workout/$date") },
                 onSettingsClick = { navController.navigate("settings") }, // 🟢 Envoie vers Paramètres
                 onHistoryClick = { navController.navigate("history") }
+            )
+        }
+        composable("manual_workout/{date}") { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date") ?: ""
+            ManualWorkoutScreen(
+                viewModel = viewModel,
+                date = date,
+                onBackClick = { navController.popBackStack() }
             )
         }
         composable("execution") {

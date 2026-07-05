@@ -222,6 +222,32 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun saveManualWorkout(date: String, sport: String, duration: Int, exercises: List<Exercise>) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val program = WorkoutProgram(sport, duration, exercises)
+                val json = Json.encodeToString(program)
+                val entity = WorkoutEntity(
+                    date = date,
+                    sport = sport,
+                    dureeMinutes = duration,
+                    exercicesJson = json,
+                    isCompleted = true
+                )
+                workoutDao.insertWorkout(entity)
+                _completedDates.value = _completedDates.value + date
+
+                // Rafraîchir l'état si on est sur cette date
+                val currentState = _uiState.value
+                if (currentState is WorkoutUiState.Success && currentState.date == date) {
+                    _uiState.value = WorkoutUiState.Success(program, date, true)
+                } else if (currentState is WorkoutUiState.Idle || currentState is WorkoutUiState.Error) {
+                     _uiState.value = WorkoutUiState.Success(program, date, true)
+                }
+            }
+        }
+    }
+
     // --- CHARGEMENT SIMULTANÉ DE LA SÉANCE ET DU APPRENTISSAGE ---
     fun loadOrCreateDailyProgram(contraintes: String, dateString: String = getTodayDateString(), sport: String? = null) {
         viewModelScope.launch {

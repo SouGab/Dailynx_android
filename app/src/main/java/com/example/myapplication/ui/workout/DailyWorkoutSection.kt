@@ -18,11 +18,28 @@ fun DailyWorkoutSection(
     uiState: WorkoutUiState,
     jourSelectionne: LocalDate,
     aujourdhui: LocalDate,
-    onStartWorkoutClick: () -> Unit
+    onStartWorkoutClick: () -> Unit,
+    onAddManualClick: (String) -> Unit
 ) {
     // On conserve ta logique exacte pour le titre de la séance
     val estAujourdhui = jourSelectionne.isEqual(aujourdhui)
     Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Séance du jour",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray
+            )
+            TextButton(onClick = { onAddManualClick(jourSelectionne.toString()) }) {
+                Text("+ Ajouter manuellement")
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         when (val state = uiState) {
