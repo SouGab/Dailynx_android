@@ -226,13 +226,16 @@ fun SettingsScreen(
             )
         }
     ) { paddingValues ->
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scrollState), // 🟢 Scroll activé
             verticalArrangement = Arrangement.Top
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "⚙️ Paramètres",
                 style = MaterialTheme.typography.headlineMedium,
@@ -240,10 +243,12 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Affichage de l'accueil", fontWeight = FontWeight.Bold, color = Color.Gray)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Card(modifier = Modifier.fillMaxWidth()) {
+            // --- SECTION 1 : AFFICHAGE ---
+            SettingsSectionTitle("Affichage de l'accueil")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            ) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     ToggleRow("🏋️‍♂️ Sport", showSport) { viewModel.toggleSport(it) }
                     ToggleRow("🧠 Culture G", showSavoir) { viewModel.toggleSavoir(it) }
@@ -254,145 +259,123 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOUTON 1 : ÉQUIPEMENT ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onEquipmentClick() },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🛠️", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Mon Équipement", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Gérer le matériel de base pour l'IA", color = Color.Gray, fontSize = 14.sp)
-                    }
-                }
-            }
+            // --- SECTION 2 : OUTILS & CONTENU ---
+            SettingsSectionTitle("Outils & Contenu")
+            
+            // BOUTON ÉQUIPEMENT
+            SettingsActionCard(
+                icon = "🛠️",
+                title = "Mon Équipement",
+                subtitle = "Gérer le matériel de base pour l'IA",
+                onClick = onEquipmentClick
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // --- BOUTON 1.5 : POÉSIE ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onPoemClick() },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("📜", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Journal de Poésie", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Relire vos poèmes quotidiens", color = Color.Gray, fontSize = 14.sp)
-                    }
-                }
-            }
+            // BOUTON POÉSIE
+            SettingsActionCard(
+                icon = "📜",
+                title = "Journal de Poésie",
+                subtitle = "Relire vos poèmes quotidiens",
+                onClick = onPoemClick,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOUTON 2 : RÉGÉNÉRER LE PROGRAMME ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { montrePopUpConfirmation = true },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🔄", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Régénérer le programme", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text("Personnaliser et recalculer via l'IA", color = Color.Gray, fontSize = 14.sp)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            // --- SECTION 3 : INTELLIGENCE ARTIFICIELLE ---
+            SettingsSectionTitle("Configuration IA & News")
+            
+            SettingsActionCard(
+                icon = "🔄",
+                title = "Régénérer le programme",
+                subtitle = "Personnaliser et recalculer via l'IA",
+                onClick = { montrePopUpConfirmation = true },
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            )
 
-            // --- BOUTON 3 : CLÉ API ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { montrePopUpApiKey = true },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🔑", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Clé API Gemini", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Modifier la clé utilisée par l'IA", color = Color.Gray, fontSize = 14.sp)
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            SettingsActionCard(
+                icon = "🔑",
+                title = "Clé API Gemini",
+                subtitle = "Modifier la clé utilisée par l'IA",
+                onClick = { montrePopUpApiKey = true },
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+            )
 
-            // --- BOUTON 3.5 : CLÉ NEWS API ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { montrePopUpNewsApiKey = true },
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🗞️", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Clé News API", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Modifier la clé pour les actualités", color = Color.Gray, fontSize = 14.sp)
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            SettingsActionCard(
+                icon = "🗞️",
+                title = "Clé News API",
+                subtitle = "Modifier la clé pour les actualités",
+                onClick = { montrePopUpNewsApiKey = true },
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+            )
 
-            // --- BOUTON 4 : MISE À JOUR ---
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = !isCheckingUpdate) {
-                        scope.launch {
-                            isCheckingUpdate = true
-                            val sha = updateManager.checkForUpdates()
-                            if (sha != null) {
-                                // Déclenche le téléchargement et l'installation
-                                updateManager.downloadAndInstallApk()
-                                // Note: Le SHA sera mis à jour après l'install réussie via MainActivity au prochain reboot
-                                // ou on pourrait le faire ici si on est sûr.
-                            }
-                            isCheckingUpdate = false
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --- SECTION 4 : SYSTÈME ---
+            SettingsSectionTitle("Système")
+            
+            SettingsActionCard(
+                icon = if (isCheckingUpdate) "⏳" else "☁️",
+                title = "Vérifier les mises à jour",
+                subtitle = "Vérifier s'il y a des changements sur GitHub",
+                onClick = {
+                    scope.launch {
+                        isCheckingUpdate = true
+                        val sha = updateManager.checkForUpdates()
+                        if (sha != null) {
+                            updateManager.downloadAndInstallApk()
                         }
-                    },
-                colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.1f))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(if (isCheckingUpdate) "⏳" else "☁️", fontSize = 28.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Vérifier les mises à jour", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Vérifier s'il y a des changements sur GitHub", color = Color.Gray, fontSize = 14.sp)
+                        isCheckingUpdate = false
                     }
-                }
+                },
+                enabled = !isCheckingUpdate
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun SettingsSectionTitle(title: String) {
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+    )
+}
+
+@Composable
+fun SettingsActionCard(
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onClick() },
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(icon, fontSize = 24.sp)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Color.Gray, fontSize = 12.sp)
             }
         }
     }

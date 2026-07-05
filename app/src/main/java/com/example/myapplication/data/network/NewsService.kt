@@ -14,16 +14,19 @@ class NewsService(private val apiKey: String) {
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun fetchFrenchNews(): NewsResponse? = withContext(Dispatchers.IO) {
-        Log.i("NewsService", "Requesting NewsApi.org for today news.")
         try {
             val request = Request.Builder().url(baseUrl + apiKey).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext null
+                if (!response.isSuccessful) {
+                    Log.e("NewsService", "API Error: ${response.code} - ${response.message}")
+                    return@withContext null
+                }
                 val body = response.body?.string() ?: return@withContext null
+                Log.d("NewsService", "Response received: ${body.take(100)}...")
                 json.decodeFromString<NewsResponse>(body)
             }
         } catch (e: Exception) {
-            Log.e("NewsService", "Error fetching news", e)
+            Log.e("NewsService", "Exception during news fetch", e)
             null
         }
     }

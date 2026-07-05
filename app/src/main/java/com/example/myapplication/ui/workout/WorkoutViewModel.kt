@@ -2,6 +2,7 @@ package com.example.myapplication.ui.workout
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.time.DayOfWeek
@@ -150,6 +151,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     fun toggleNews(enabled: Boolean) {
         apiKeyManager.setNewsEnabled(enabled)
         _showNews.value = enabled
+        // Si on active et qu'on a pas de news, on tente un refresh
+        if (enabled && _newsState.value is NewsUiState.Idle) {
+            loadOrCreateDailyProgram(contraintes = "", dateString = getTodayDateString())
+        }
     }
 
     private val _monthlyWorkouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
@@ -363,6 +368,16 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private suspend fun generateWeeklyNewsFromNetwork(dateSelectionneeString: String) {
+        if (newsService == null) {
+            _newsState.value = NewsUiState.Error("Clé NewsAPI manquante. Allez dans Réglages.")
+            return
+        }
+
+        withContext(Dispatchers.Main) {
+            Toast.makeText(getApplication(), "Récupération des actualités...", Toast.LENGTH_SHORT).show()
+        }
+
+        Log.i("WorkoutViewModel", "Fetching news for $dateSelectionneeString...")
         val response = newsService?.fetchFrenchNews()
         if (response != null && response.articles.isNotEmpty()) {
             val newsEntities = response.articles.map {
@@ -376,8 +391,15 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             }
             newsDao.insertNews(newsEntities)
             _newsState.value = NewsUiState.Success(response.articles)
+            Log.i("WorkoutViewModel", "News saved and state updated.")
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(getApplication(), "Actualités mises à jour !", Toast.LENGTH_SHORT).show()
+            }
         } else {
-            _newsState.value = NewsUiState.Error("Pas de news disponibles.")
+            val errorMsg = if (response == null) "Erreur réseau ou clé invalide." else "Aucun article trouvé."
+            _newsState.value = NewsUiState.Error(errorMsg)
+            Log.w("WorkoutViewModel", "News fetch failed: $errorMsg")
         }
     }
 
