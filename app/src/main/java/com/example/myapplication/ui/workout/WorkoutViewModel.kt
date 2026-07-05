@@ -283,10 +283,10 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     // --- CHARGEMENT SIMULTANÉ DE LA SÉANCE ET DU APPRENTISSAGE ---
     fun loadOrCreateDailyProgram(contraintes: String, dateString: String = getTodayDateString(), sport: String? = null) {
         viewModelScope.launch {
-            _uiState.value = WorkoutUiState.Loading
-            _learningState.value = LearningUiState.Loading
-            _poemState.value = PoemUiState.Loading
-            _newsState.value = NewsUiState.Loading
+            if (_showSport.value) _uiState.value = WorkoutUiState.Loading
+            if (_showSavoir.value) _learningState.value = LearningUiState.Loading
+            if (_showPoem.value) _poemState.value = PoemUiState.Loading
+            if (_showNews.value) _newsState.value = NewsUiState.Loading
 
             withContext(Dispatchers.IO) {
                 val dateCible = LocalDate.parse(dateString)
@@ -295,56 +295,68 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 _completedDates.value = workoutDao.getCompletedDatesInRange(lundi, dimanche).toSet()
 
                 // 1. Chargement Entraînement
-                val localWorkout = workoutDao.getWorkoutByDate(dateString)
-                if (localWorkout != null) {
-                    try {
-                        val program = Json.decodeFromString<WorkoutProgram>(localWorkout.exercicesJson)
-                        _uiState.value = WorkoutUiState.Success(program, dateString, localWorkout.isCompleted)
-                    } catch (e: Exception) {
-                        _uiState.value = WorkoutUiState.Error("Erreur de lecture locale du sport.")
+                if (_showSport.value) {
+                    val localWorkout = workoutDao.getWorkoutByDate(dateString)
+                    if (localWorkout != null) {
+                        try {
+                            val program = Json.decodeFromString<WorkoutProgram>(localWorkout.exercicesJson)
+                            _uiState.value = WorkoutUiState.Success(program, dateString, localWorkout.isCompleted)
+                        } catch (e: Exception) {
+                            _uiState.value = WorkoutUiState.Error("Erreur de lecture locale du sport.")
+                        }
+                    } else {
+                        generateFullWeekFromNetwork(contraintes, dateString, sport = sport)
                     }
-                } else {
-                    generateFullWeekFromNetwork(contraintes, dateString, sport = sport)
                 }
 
                 // 2. Chargement Savoir (avec récupération de l'état isLiked)
-                val localLearning = learningDao.getLearningByDate(dateString)
-                if (localLearning != null) {
-                    try {
-                        val infoObj = Json.decodeFromString<Info>(localLearning.infoJson)
-                        _learningState.value = LearningUiState.Success(infoObj, localLearning.isLiked)
-                    } catch (e: Exception) {
-                        _learningState.value = LearningUiState.Error("Erreur de lecture locale du savoir.")
+                if (_showSavoir.value) {
+                    val localLearning = learningDao.getLearningByDate(dateString)
+                    if (localLearning != null) {
+                        try {
+                            val infoObj = Json.decodeFromString<Info>(localLearning.infoJson)
+                            _learningState.value = LearningUiState.Success(infoObj, localLearning.isLiked)
+                        } catch (e: Exception) {
+                            _learningState.value = LearningUiState.Error("Erreur de lecture locale du savoir.")
+                        }
+                    } else {
+                        generateWeeklyLearningFromNetwork(dateString)
                     }
-                } else {
-                    generateWeeklyLearningFromNetwork(dateString)
                 }
 
                 // 3. Chargement Poème
-                val localPoem = poemDao.getPoemByDate(dateString)
-                if (localPoem != null) {
-                    try {
-                        val lines = Json.decodeFromString<List<String>>(localPoem.linesJson)
-                        val poem = Poem(title = localPoem.title, author = localPoem.author, lines = lines, linecount = lines.size.toString())
-                        _poemState.value = PoemUiState.Success(poem)
-                    } catch (e: Exception) {
-                        _poemState.value = PoemUiState.Error("Erreur de lecture du poème.")
+                if (_showPoem.value) {
+                    val localPoem = poemDao.getPoemByDate(dateString)
+                    if (localPoem != null) {
+                        try {
+                            val lines = Json.decodeFromString<List<String>>(localPoem.linesJson)
+                            val poem = Poem(title = localPoem.title, author = localPoem.author, lines = lines, linecount = lines.size.toString())
+                            _poemState.value = PoemUiState.Success(poem)
+                        } catch (e: Exception) {
+                            _poemState.value = PoemUiState.Error("Erreur de lecture du poème.")
+                        }
+                    } else {
+                        // Ils seront générés via la logique de semaine du sport si activé, 
+                        // ou on force ici si le sport est désactivé mais le poème activé
+                        if (!_showSport.value) {
+                             generateWeeklyPoemsFromNetwork(dateString)
+                        } else {
+                             _poemState.value = PoemUiState.Idle
+                        }
                     }
-                } else {
-                    // Si on a pas de poème local, on ne fait rien ici pour éviter les requêtes à chaque clic.
-                    // Ils seront générés via la logique de semaine.
-                    _poemState.value = PoemUiState.Idle
                 }
 
                 // 4. Chargement News
-                val localNews = newsDao.getNewsByDate(dateString)
-                if (localNews.isNotEmpty()) {
-                    val articles = localNews.map {
-                        Article(title = it.title, description = it.description, url = it.url, source = com.example.myapplication.data.model.Source(it.sourceName ?: ""))
+                if (_showNews.value) {
+                    val localNews = newsDao.getNewsByDate(dateString)
+                    if (localNews.isNotEmpty()) {
+                        val articles = localNews.map {
+                            Article(title = it.title, description = it.description, url = it.url, source = com.example.myapplication.data.model.Source(it.sourceName ?: ""))
+                        }
+                        _newsState.value = NewsUiState.Success(articles)
+                    } else {
+                        generateWeeklyNewsFromNetwork(dateString)
                     }
-                    _newsState.value = NewsUiState.Success(articles)
-                } else {
-                    generateWeeklyNewsFromNetwork(dateString)
                 }
             }
         }
@@ -405,10 +417,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val dateCible = LocalDate.parse(dateSelectionneeString)
         val lundiDeCetteSemaine = dateCible.with(DayOfWeek.MONDAY)
 
-        // On génère aussi les poèmes pour la semaine si on régénère le sport
-        generateWeeklyPoemsFromNetwork(dateSelectionneeString)
-        // On génère aussi les news pour la semaine
-        generateWeeklyNewsFromNetwork(dateSelectionneeString)
+        // On génère aussi les poèmes pour la semaine si on régénère le sport ET que c'est activé
+        if (_showPoem.value) {
+            generateWeeklyPoemsFromNetwork(dateSelectionneeString)
+        }
+        // On génère aussi les news pour la semaine si c'est activé
+        if (_showNews.value) {
+            generateWeeklyNewsFromNetwork(dateSelectionneeString)
+        }
 
         val equipementsUtilisateur = equipmentDao.getAllEquipment()
         val texteEquipement = if (equipementsUtilisateur.isEmpty()) {

@@ -14,6 +14,7 @@ class NewsService(private val apiKey: String) {
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun fetchFrenchNews(): NewsResponse? = withContext(Dispatchers.IO) {
+        Log.i("NewsService", "Requesting NewsApi.org for today news.")
         try {
             val request = Request.Builder().url(baseUrl + apiKey).build()
             client.newCall(request).execute().use { response ->
