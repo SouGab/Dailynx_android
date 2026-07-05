@@ -31,6 +31,11 @@ fun SettingsScreen(
     onPoemClick: () -> Unit
 ) {
     val equipmentList by viewModel.equipmentList.collectAsState()
+    val showSport by viewModel.showSport.collectAsState()
+    val showSavoir by viewModel.showSavoir.collectAsState()
+    val showPoem by viewModel.showPoem.collectAsState()
+    val showNews by viewModel.showNews.collectAsState()
+
     var montrePopUpConfirmation by remember { mutableStateOf(false) }
     var montrePopUpApiKey by remember { mutableStateOf(false) }
     var montrePopUpNewsApiKey by remember { mutableStateOf(false) }
@@ -233,7 +238,21 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text("Affichage de l'accueil", fontWeight = FontWeight.Bold, color = Color.Gray)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    ToggleRow("🏋️‍♂️ Sport", showSport) { viewModel.toggleSport(it) }
+                    ToggleRow("🧠 Culture G", showSavoir) { viewModel.toggleSavoir(it) }
+                    ToggleRow("📜 Poésie", showPoem) { viewModel.togglePoem(it) }
+                    ToggleRow("📰 Actualités", showNews) { viewModel.toggleNews(it) }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // --- BOUTON 1 : ÉQUIPEMENT ---
             Card(
@@ -376,5 +395,19 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

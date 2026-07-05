@@ -38,6 +38,11 @@ fun HomeScreen(
     val poemState by viewModel.poemState.collectAsState()
     val newsState by viewModel.newsState.collectAsState()
 
+    val showSport by viewModel.showSport.collectAsState()
+    val showSavoir by viewModel.showSavoir.collectAsState()
+    val showPoem by viewModel.showPoem.collectAsState()
+    val showNews by viewModel.showNews.collectAsState()
+
     val aujourdhui = remember { LocalDate.now() }
     val lundiDeLaSemaine = remember { aujourdhui.with(DayOfWeek.MONDAY) }
     var jourSelectionne by remember { mutableStateOf(aujourdhui) }
@@ -149,20 +154,39 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(scrollState),
                 verticalArrangement = Arrangement.Top
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                DailyWorkoutSection(
-                    uiState = uiState,
-                    jourSelectionne = jourSelectionne,
-                    aujourdhui = aujourdhui,
-                    onStartWorkoutClick = onStartWorkoutClick,
-                    onAddManualClick = onAddManualWorkoutClick
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                DailyLearningSection(uiState = learningState, onLikeClick = { viewModel.toggleLikeLearning(jourSelectionne.toString()) })
-                Spacer(modifier = Modifier.height(20.dp))
-                DailyPoemSection(uiState = poemState)
-                Spacer(modifier = Modifier.height(20.dp))
-                DailyNewsSection(uiState = newsState)
+                if (showSport || showSavoir || showPoem || showNews) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    if (showSport) {
+                        DailyWorkoutSection(
+                            uiState = uiState,
+                            jourSelectionne = jourSelectionne,
+                            aujourdhui = aujourdhui,
+                            onStartWorkoutClick = onStartWorkoutClick,
+                            onAddManualClick = onAddManualWorkoutClick
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    if (showSavoir) {
+                        DailyLearningSection(uiState = learningState, onLikeClick = { viewModel.toggleLikeLearning(jourSelectionne.toString()) })
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    if (showPoem) {
+                        DailyPoemSection(uiState = poemState)
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    if (showNews) {
+                        DailyNewsSection(uiState = newsState)
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Aucune section activée.", color = Color.Gray)
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp)) // Espace net en bas du scroll
             }
         }

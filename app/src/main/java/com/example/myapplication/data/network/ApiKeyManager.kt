@@ -9,7 +9,24 @@ class ApiKeyManager(context: Context) {
     companion object {
         private const val KEY_GEMINI_API = "gemini_api_key"
         private const val KEY_NEWS_API = "news_api_key"
+        
+        private const val KEY_SHOW_SPORT = "show_sport"
+        private const val KEY_SHOW_SAVOIR = "show_savoir"
+        private const val KEY_SHOW_POEM = "show_poem"
+        private const val KEY_SHOW_NEWS = "show_news"
     }
+
+    fun isSportEnabled(): Boolean = prefs.getBoolean(KEY_SHOW_SPORT, true)
+    fun setSportEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_SHOW_SPORT, enabled).apply()
+
+    fun isSavoirEnabled(): Boolean = prefs.getBoolean(KEY_SHOW_SAVOIR, true)
+    fun setSavoirEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_SHOW_SAVOIR, enabled).apply()
+
+    fun isPoemEnabled(): Boolean = prefs.getBoolean(KEY_SHOW_POEM, true)
+    fun setPoemEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_SHOW_POEM, enabled).apply()
+
+    fun isNewsEnabled(): Boolean = prefs.getBoolean(KEY_SHOW_NEWS, true)
+    fun setNewsEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_SHOW_NEWS, enabled).apply()
 
     fun getApiKey(): String? {
         return prefs.getString(KEY_GEMINI_API, null)

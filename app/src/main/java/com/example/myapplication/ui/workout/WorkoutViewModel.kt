@@ -120,6 +120,38 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private val _newsState = MutableStateFlow<NewsUiState>(NewsUiState.Idle)
     val newsState: StateFlow<NewsUiState> = _newsState
 
+    private val _showSport = MutableStateFlow(apiKeyManager.isSportEnabled())
+    val showSport: StateFlow<Boolean> = _showSport
+
+    private val _showSavoir = MutableStateFlow(apiKeyManager.isSavoirEnabled())
+    val showSavoir: StateFlow<Boolean> = _showSavoir
+
+    private val _showPoem = MutableStateFlow(apiKeyManager.isPoemEnabled())
+    val showPoem: StateFlow<Boolean> = _showPoem
+
+    private val _showNews = MutableStateFlow(apiKeyManager.isNewsEnabled())
+    val showNews: StateFlow<Boolean> = _showNews
+
+    fun toggleSport(enabled: Boolean) {
+        apiKeyManager.setSportEnabled(enabled)
+        _showSport.value = enabled
+    }
+
+    fun toggleSavoir(enabled: Boolean) {
+        apiKeyManager.setSavoirEnabled(enabled)
+        _showSavoir.value = enabled
+    }
+
+    fun togglePoem(enabled: Boolean) {
+        apiKeyManager.setPoemEnabled(enabled)
+        _showPoem.value = enabled
+    }
+
+    fun toggleNews(enabled: Boolean) {
+        apiKeyManager.setNewsEnabled(enabled)
+        _showNews.value = enabled
+    }
+
     private val _monthlyWorkouts = MutableStateFlow<List<WorkoutEntity>>(emptyList())
     val monthlyWorkouts: StateFlow<List<WorkoutEntity>> = _monthlyWorkouts
 
